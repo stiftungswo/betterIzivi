@@ -8,4 +8,10 @@ RUN chmod +x /tmp/wait-for-it.sh
 ENV BUNDLER_VERSION=2.0.1
 RUN gem install bundler -v "2.0.1" --no-document
 
+WORKDIR /api
+
+COPY Gemfile* ./
+COPY . /api
+
 EXPOSE 3000
+CMD ["bin/rails", "server", "-p", "8000", "-b", "0.0.0.0"]
