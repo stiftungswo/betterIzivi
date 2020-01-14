@@ -111,6 +111,11 @@ export class ApiStore {
 
   @action
   async postLogin(values: { email: string; password: string }) {
+    // remove the authorization token if it is expired already in order to fix the multiple login issue
+    if (Boolean(this._token) && moment.unix(this.userInfo!.exp).isBefore()) {
+      this.removeAuthorizationToken();
+    }
+
     const res = await this._api.post<LoginResponse>('/users/sign_in', { user: values });
     runInAction(() => {
       this.setToken(res.headers.authorization);
@@ -182,8 +187,14 @@ export class ApiStore {
       },
       (error: AxiosError) => {
         if (error.response && error.response.status === 401) {
-          console.log('Unauthorized API access, redirect to login'); // tslint:disable-line:no-console
-          if (error.config.url && !/\/users\/sign_out$/.test(error.config.url)) {
+          console.log('Unauthorized API access'); // tslint:disable-line:no-console
+
+          const comingFromLogout = error.config.url && /\/users\/sign_out$/.test(error.config.url);
+          const comingFromLogin = error.config.url && /\/users\/sign_in$/.test(error.config.url);
+
+          if (comingFromLogin) {
+            this.removeAuthorizationToken();
+          } else if (!comingFromLogout) {
             this.logout().catch(this.removeAuthorizationToken.bind(this));
           } else {
             this.removeAuthorizationToken();
