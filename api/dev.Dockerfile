@@ -13,5 +13,7 @@ WORKDIR /api
 COPY Gemfile* ./
 COPY . /api
 
+RUN bundle install
+
 EXPOSE 3000
 CMD ["bin/rails", "server", "-p", "8000", "-b", "0.0.0.0"]
